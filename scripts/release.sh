@@ -79,9 +79,16 @@ export TAURI_SIGNING_PRIVATE_KEY
 TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_FILE")"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"
 
-echo "▶ building (this is the slow part)"
+echo "▶ building the signed bundle"
 npm run build
-npm run tauri -- build
+# `app` is the target that produces the updater artifacts (.app.tar.gz + .sig).
+# The DMG goes separately: hdiutil intermittently refuses to unmount its own
+# scratch volume, and a flaky disk-image step must never sink a release.
+npm run tauri -- build --bundles app
+
+echo "▶ bundling the dmg (best effort)"
+npm run tauri -- build --bundles dmg >/dev/null 2>&1 \
+  || echo "  ! dmg step failed (hdiutil was busy) — releasing without it"
 
 MACOS_DIR="src-tauri/target/release/bundle/macos"
 DMG_DIR="src-tauri/target/release/bundle/dmg"
@@ -90,6 +97,7 @@ APP="$MACOS_DIR/AuraForge.app"
 TARBALL="$MACOS_DIR/AuraForge.app.tar.gz"
 SIG="$MACOS_DIR/AuraForge.app.tar.gz.sig"
 DMG="$(ls -t "$DMG_DIR"/AuraForge_"$VERSION"_*.dmg 2>/dev/null | head -1 || true)"
+rm -f "$MACOS_DIR"/rw.*.dmg 2>/dev/null || true
 
 for f in "$APP" "$TARBALL" "$SIG"; do
   if [ ! -e "$f" ]; then
@@ -137,7 +145,7 @@ git push -q origin HEAD
 
 TAG="v$VERSION"
 ASSETS=("$TARBALL" "$SIG" "latest.json")
-[ -n "$DMG" ] && ASSETS+=("$DMG")
+if [ -n "$DMG" ]; then ASSETS+=("$DMG"); else echo "  (no dmg — the updater does not need one)"; fi
 
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
   echo "▶ release $TAG already exists — replacing its assets"
