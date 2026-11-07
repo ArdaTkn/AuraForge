@@ -6,6 +6,7 @@ import { Stage } from './ui/Stage';
 import { CodeDrawer } from './ui/CodeDrawer';
 import { CommandPalette } from './ui/CommandPalette';
 import { SECTIONS, useAuraStore } from './state/store';
+import { useUpdater } from './update';
 
 export default function App() {
   const [fps, setFps] = useState(0);
@@ -23,6 +24,12 @@ export default function App() {
 
   const closeCode = useCallback(() => setCodeOpen(false), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+
+  /* Read the running version and check for an update once the studio has
+     settled — a slow network must never delay the first frame. */
+  useEffect(() => {
+    useUpdater.getState().boot();
+  }, []);
 
   /* ------------------------------- shortcuts ------------------------------- */
   useEffect(() => {

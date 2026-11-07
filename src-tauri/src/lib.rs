@@ -11,6 +11,11 @@ use export::ExportState;
 pub fn run() {
     tauri::Builder::default()
         .manage(ExportState::default())
+        // The updater checks a signed manifest on GitHub Releases. Updates are
+        // verified against the minisign public key in tauri.conf.json, so a
+        // tampered download is rejected before it is ever unpacked.
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             health,
             report_stats,

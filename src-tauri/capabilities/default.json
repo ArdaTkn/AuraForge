@@ -3,5 +3,10 @@
   "identifier": "default",
   "description": "Default capability set for the AuraForge studio window.",
   "windows": ["main"],
-  "permissions": ["core:default", "core:window:allow-start-dragging"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "updater:default",
+    "process:allow-restart"
+  ]
 }

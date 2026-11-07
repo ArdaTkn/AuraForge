@@ -1,6 +1,8 @@
 import { PATTERNS } from '../render/types';
 import { useAuraStore } from '../state/store';
+import { useUpdater } from '../update';
 import { Icon } from './Icon';
+import { UpdateBadge } from './UpdateBadge';
 
 interface TopBarProps {
   fps: number;
@@ -16,6 +18,7 @@ export function TopBar({ fps, frameMs, onOpenCode, onOpenPalette }: TopBarProps)
   const params = useAuraStore((s) => s.params);
   const nodes = useAuraStore((s) => s.nodes);
   const status = useAuraStore((s) => s.status);
+  const version = useUpdater((s) => s.current);
 
   const pattern = PATTERNS.find((p) => p.id === params.pattern);
   const mixed = params.mix > 0.01;
@@ -28,6 +31,7 @@ export function TopBar({ fps, frameMs, onOpenCode, onOpenPalette }: TopBarProps)
           Aura<em>Forge</em>
         </span>
         <span className="brand__sub">parametric energy studio</span>
+        {version && <span className="brand__ver">v{version}</span>}
       </div>
 
       <button className="btn btn--ghost" onClick={onOpenPalette} title="Command palette">
@@ -73,6 +77,8 @@ export function TopBar({ fps, frameMs, onOpenCode, onOpenPalette }: TopBarProps)
       <div className="topbar__spacer" />
 
       {status && <span className="topbar__status">{status}</span>}
+
+      <UpdateBadge />
 
       <button className="btn btn--icon" onClick={togglePlay} title="Play / pause (Space)">
         <Icon name={playing ? 'pause' : 'play'} size={13} />

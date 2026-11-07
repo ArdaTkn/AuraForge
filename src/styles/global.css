@@ -1821,6 +1821,71 @@ textarea {
   color: var(--text-soft);
 }
 
+/* ══════════════════════════ UPDATE AFFORDANCE ══════════════════════════ */
+
+.brand__ver {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  color: #3f3f3f;
+}
+
+.update-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #4a4a4a;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  white-space: nowrap;
+  animation: fade-in 0.4s var(--ease);
+  transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
+}
+
+.update-pill:hover {
+  border-color: #6a6a6a;
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.update-pill.is-busy {
+  color: var(--text-soft);
+  border-color: var(--border-hi);
+  background: transparent;
+}
+
+.update-pill.is-error {
+  border-color: #4a3a1e;
+  background: rgba(255, 190, 80, 0.07);
+  color: #d9bb8a;
+}
+
+.update-pill__bar {
+  position: relative;
+  width: 44px;
+  height: 2px;
+  border-radius: 2px;
+  background: #262626;
+  overflow: hidden;
+}
+
+.update-pill__bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--accent);
+  animation: boot-slide 1.2s var(--ease) infinite;
+}
+
+.update-pill__bar span[style] {
+  animation: none;
+}
+
 .stat b svg {
   vertical-align: middle;
   margin-left: 4px;

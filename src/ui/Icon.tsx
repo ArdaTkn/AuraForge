@@ -16,7 +16,7 @@ export type IconName =
   | 'search' | 'play' | 'pause' | 'restart' | 'code' | 'panel'
   | 'save' | 'image' | 'close' | 'duplicate' | 'dice' | 'plus'
   | 'trash' | 'check' | 'external' | 'chevron-down' | 'chevron-right'
-  | 'warning' | 'copy' | 'slider' | 'command'
+  | 'warning' | 'copy' | 'slider' | 'command' | 'download'
   // rail sections
   | 'scenes' | 'pattern' | 'flow' | 'structure' | 'volume'
   | 'colour' | 'post' | 'nodes' | 'export'
@@ -146,6 +146,13 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M10 6V4.7A1.3 1.3 0 1 1 11.3 6z" />
       <path d="M6 10v1.3A1.3 1.3 0 1 1 4.7 10z" />
       <path d="M10 10v1.3A1.3 1.3 0 1 0 11.3 10z" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M8 2.4v7.2" />
+      <path d="m5.1 7 2.9 2.9L10.9 7" />
+      <path d="M2.8 12.2v1.2a1.1 1.1 0 0 0 1.1 1.1h8.2a1.1 1.1 0 0 0 1.1-1.1v-1.2" />
     </>
   ),
 

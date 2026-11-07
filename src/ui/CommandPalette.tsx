@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PATTERNS, NODE_KINDS, SCENES } from '../render/types';
 import { SECTIONS, useAuraStore } from '../state/store';
+import { useUpdater } from '../update';
 import { Icon, IconName } from './Icon';
 import { PARAMS } from './params';
 
@@ -110,6 +111,14 @@ export function CommandPalette({ open, onClose }: PaletteProps) {
       icon: 'plus',
       label: 'Add a node at the centre',
       run: () => s.addNode(0, 0, s.brush),
+    });
+    list.push({
+      id: 'act-update',
+      group: 'Act',
+      icon: 'download',
+      label: 'Check for updates',
+      sub: useUpdater.getState().current ? `v${useUpdater.getState().current}` : undefined,
+      run: () => void useUpdater.getState().check(false),
     });
 
     for (const sc of SCENES) {
