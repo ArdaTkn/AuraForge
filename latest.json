@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "notes": "First public release. Nine pattern archetypes with a hybrid blend lane, nine independent canvas nodes, six output formats from 9:16 Reels to 2.39:1 cinema, PNG/JPEG stills and h.264 MP4 export, and a rail interface with a command palette.",
+  "pub_date": "2026-11-07T17:26:23.032Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSVjRHVGtPaHBJcU1XL1J4eVEreVZuc0pnVUhFZEZSeUNlL0t6N2NSTWppYU0rak5Xd1NqckM4S3k1cWxmdDd1UU15UDZoNUI2OExzZHA3RmRQOVNKTDFUd2FYYUk0dFFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MDcyMzgyCWZpbGU6QXVyYUZvcmdlLmFwcC50YXIuZ3oJdmVyc2lvbjowLjEuMAp2eVVyOEpkaE00aVluRkQwc2VDamlqMXZLSGlTNTFBRG9KckM5N3pJRkNlZXFjNGFuVStaRFc4TG9Qems5NGpGdk03OG5BYkVVZ3I0Zitlb1JvZmtDdz09Cg==",
+      "url": "https://github.com/ArdaTkn/AuraForge/releases/download/v0.1.0/AuraForge.app.tar.gz"
+    }
+  }
+}
