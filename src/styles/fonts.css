@@ -1,0 +1,43 @@
+/* Local webfonts — bundled so the studio works offline and the Tauri CSP
+   stays locked to 'self'. Syne is the variable display face; Satoshi carries
+   the interface text. Both are the same faces Arda's portfolio uses. */
+
+@font-face {
+  font-family: 'Syne';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/syne-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/satoshi-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/satoshi-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/satoshi-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/satoshi-700.woff2') format('woff2');
+}

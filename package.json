@@ -1,0 +1,36 @@
+{
+  "name": "auraforge",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AuraForge — real-time no-code parametric generative art studio (Tauri v2 + WebGL2)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "app:dev": "tauri dev",
+    "app:build": "tauri build",
+    "app:bundle": "tauri build --bundles app,dmg",
+    "app:install": "bash scripts/install-macos.sh",
+    "app:open": "open -a /Applications/AuraForge.app",
+    "selftest": "VITE_AURAFORGE_SELFTEST=1 tauri dev"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}

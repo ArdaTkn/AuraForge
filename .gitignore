@@ -1,0 +1,24 @@
+# dependencies & build output
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+
+# Rust / Tauri
+src-tauri/target
+src-tauri/gen/schemas
+
+# OS
+.DS_Store
+
+# signing material — the updater's private key never belongs in a repository
+.tauri-signing/
+*.key
+
+# log files the render pipeline can leave behind
+*.ffmpeg.log
+
+# Satoshi is free to *use* but its licence does not allow redistributing the
+# font files. Syne (OFL) is committed; a fresh clone runs `npm run fonts`.
+public/fonts/satoshi-*.woff2
