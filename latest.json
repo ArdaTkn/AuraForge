@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0",
+  "notes": "Install, update and release documentation. Explains the six output formats and the quality ladder in plain language, and documents the runtime switches for unattended installs.",
+  "pub_date": "2026-11-07T17:30:02.842Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSVjRHVGtPaHBJcVBYbVMwdG5UelRSUW55VDFqNEU4ajZjejE0cmdCaEtjVUtIV3Qyby9VMTZzVWFLNjhJYmExTFJnYmF3K01Pa0wwblhNa3VROXJteGxXUUYrNVlTc1F3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MDcyNjAyCWZpbGU6QXVyYUZvcmdlLmFwcC50YXIuZ3oJdmVyc2lvbjowLjIuMApiRDZrVTZqTjA3MEsvQlZzQ1QxUUpZTW43d1dLeGtISDh6ZTd5MG9zMjM1OXhDa2h1SlFPSTdjemJySWVhdWI1Y2w4dURiMzFGMEtmYkxSbmxzSTFBZz09Cg==",
+      "url": "https://github.com/ArdaTkn/AuraForge/releases/download/v0.2.0/AuraForge.app.tar.gz"
+    }
+  }
+}

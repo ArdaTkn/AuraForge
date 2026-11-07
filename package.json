@@ -1,7 +1,7 @@
 {
   "name": "auraforge",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "AuraForge — real-time no-code parametric generative art studio (Tauri v2 + WebGL2)",
   "scripts": {
