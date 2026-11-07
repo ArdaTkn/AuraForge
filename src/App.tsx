@@ -28,7 +28,7 @@ export default function App() {
   /* Read the running version and check for an update once the studio has
      settled — a slow network must never delay the first frame. */
   useEffect(() => {
-    useUpdater.getState().boot();
+    void useUpdater.getState().boot();
   }, []);
 
   /* ------------------------------- shortcuts ------------------------------- */

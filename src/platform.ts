@@ -33,6 +33,18 @@ export async function reportStats(
   }
 }
 
+/** Reads a process environment flag through the native shell — the webview
+ * cannot see its own launch environment. Returns false in a plain browser. */
+export async function envFlag(name: string): Promise<boolean> {
+  const invoke = await core();
+  if (!invoke) return false;
+  try {
+    return await invoke<boolean>('env_flag', { name });
+  } catch {
+    return false;
+  }
+}
+
 /** Console-free logging for the in-app self test (debug builds only). */
 export async function devLog(message: string): Promise<void> {
   const invoke = await core();

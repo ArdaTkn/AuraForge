@@ -20,6 +20,7 @@ pub fn run() {
             health,
             report_stats,
             dev_log,
+            env_flag,
             export::export_root,
             export::ffmpeg_version,
             export::save_image,
@@ -62,7 +63,9 @@ fn report_stats(fps: f64, frame_ms: f64, width: u32, height: u32, steps: f64) {
 }
 
 /// Same channel as [`report_stats`], for the in-app self test's free-form
-/// lines. Debug builds only.
+/// lines. Debug builds always print; a release build prints when the app is
+/// launched with `AURAFORGE_VERBOSE=1`, which is what makes a shipped binary
+/// diagnosable without rebuilding it.
 #[tauri::command]
 fn dev_log(message: String) {
     #[cfg(debug_assertions)]
@@ -70,6 +73,19 @@ fn dev_log(message: String) {
 
     #[cfg(not(debug_assertions))]
     {
-        let _ = message;
+        if std::env::var_os("AURAFORGE_VERBOSE").is_some() {
+            println!("[auraforge] {message}");
+        }
     }
+}
+
+/// Reads a launch-time environment flag from the frontend.
+///
+/// The webview cannot see the process environment, so runtime switches have to
+/// come through here. `AURAFORGE_AUTOUPDATE=1` makes a launch check for and
+/// install any pending update without waiting for a click, which is what an
+/// unattended install needs — and what makes the update path scriptable.
+#[tauri::command]
+fn env_flag(name: String) -> bool {
+    std::env::var_os(&name).is_some_and(|v| v != "0" && v != "false")
 }

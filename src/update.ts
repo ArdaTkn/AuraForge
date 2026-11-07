@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devLog, IS_TAURI } from './platform';
+import { devLog, envFlag, IS_TAURI } from './platform';
 
 export interface UpdateInfo {
   version: string;
@@ -45,11 +45,26 @@ export const useUpdater = create<UpdaterState>((set, get) => ({
   error: null,
 
   /** Called once on mount: shows the version, then checks quietly after the
-   *  studio has settled so a slow network never delays the first frame. */
-  boot: () => {
-    void runningVersion().then((v) => set({ current: v }));
+   *  studio has settled so a slow network never delays the first frame.
+   *
+   *  Launching with `AURAFORGE_AUTOUPDATE=1` checks almost immediately and
+   *  installs without waiting for a click — that is what an unattended install
+   *  needs, and it makes the whole update path scriptable. */
+  boot: async () => {
+    const version = await runningVersion();
+    set({ current: version });
+    await devLog(`AuraForge ${version} starting`);
     if (!IS_TAURI) return;
-    window.setTimeout(() => void get().check(true), 4000);
+
+    const auto = await envFlag('AURAFORGE_AUTOUPDATE');
+
+    window.setTimeout(async () => {
+      await get().check(true);
+      if (auto && get().phase === 'available') {
+        await devLog('AURAFORGE_AUTOUPDATE set — installing without a prompt');
+        await get().install();
+      }
+    }, auto ? 600 : 4000);
   },
 
   check: async (silent) => {
