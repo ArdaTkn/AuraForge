@@ -10,44 +10,75 @@ that same shader re-rendered frame by frame at full resolution.
 
 ---
 
-## Install and launch
+## Install
 
-Build it, then put it where Mac apps live:
+Grab the `.dmg` from
+**[Releases](https://github.com/ArdaTkn/AuraForge/releases/latest)**, open it,
+drag AuraForge into Applications. That is the whole install.
+
+The app then **updates itself**. It checks a signed manifest on launch; when a
+newer version exists a small pill appears in the top bar and installing it is
+one click. There is nothing to download by hand ever again.
+
+## Run from source
 
 ```bash
+git clone https://github.com/ArdaTkn/AuraForge.git
+cd AuraForge
 npm install
-npm run app:build      # → .app + .dmg in src-tauri/target/release/bundle/
-npm run app:install    # copies AuraForge.app into /Applications
+npm run fonts      # Satoshi is not committed — see "Fonts" below
+npm run app:dev    # Tauri window with hot reload
 ```
 
-After that there is no terminal involved again:
-
-* **⌘Space** → type `AuraForge` → Enter
-* **Launchpad** → AuraForge
-* or `open -a /Applications/AuraForge.app` (shortcut: `npm run app:open`)
-
-Optional one-line terminal alias:
+Browser-only (fast shader iteration, no exporting):
 
 ```bash
-echo "alias auraforge='open -a /Applications/AuraForge.app'" >> ~/.zshrc && exec zsh
-```
-
-Use the full path rather than `open -a AuraForge`: while a build directory copy
-also exists, LaunchServices cannot tell which one you mean.
-
-The installer copies the bundle, clears any quarantine flag, and falls back to
-`~/Applications` if `/Applications` is not writable. A **`.dmg`** also lands in
-the bundle directory if you want to hand the app to someone else — they open it
-and drag the icon across.
-
-For development (hot reload, no install):
-
-```bash
-npm run app:dev        # Tauri window
-npm run dev            # browser only on 127.0.0.1:1420 (no file writing)
+npm run dev        # http://127.0.0.1:1420
 ```
 
 `ffmpeg` must be on `PATH` for video export (`brew install ffmpeg`).
+
+---
+
+## Updates
+
+The updater is Tauri's, pointed at
+`https://github.com/ArdaTkn/AuraForge/releases/latest/download/latest.json`.
+
+Every update is **signed with a minisign key** and verified against the public
+key baked into the binary, so a tampered or substituted download is rejected
+before it is unpacked. The private key lives at `~/.tauri/auraforge.key` and is
+never committed — **if it is lost, no further updates can ever be signed.**
+
+The app checks quietly a few seconds after launch and says nothing when it is up
+to date. To check on demand: **⌘K → "Check for updates"**.
+
+### Publishing an update
+
+```bash
+npm run release -- 0.2.0 "What changed in this version"
+```
+
+That one command:
+
+1. bumps the version in `package.json`, `tauri.conf.json` and `Cargo.toml`;
+2. builds and signs the bundle;
+3. writes `latest.json` with the signature and the download URL;
+4. commits, pushes, and creates the GitHub Release with the tarball, its
+   signature, the manifest and the `.dmg`.
+
+Every installed copy picks it up on its next launch.
+
+### Unattended installs
+
+Launching with `AURAFORGE_AUTOUPDATE=1` checks almost immediately and installs
+without waiting for a click. Add `AURAFORGE_VERBOSE=1` to see the updater's log
+lines from a **release** build — useful for diagnosing a machine you cannot
+rebuild.
+
+```bash
+AURAFORGE_AUTOUPDATE=1 AURAFORGE_VERBOSE=1 open -a /Applications/AuraForge.app
+```
 
 ---
 
@@ -104,6 +135,14 @@ Rail footer: **⌘K** palette · **◧** live code · **⤢** full-bleed canvas.
 | `R` / `M` | randomize / mutate |
 | `Esc` | close drawer, deselect node |
 
+### Every icon is a drawing, not a character
+
+There is not a single Unicode glyph in the interface. That is deliberate: SF Mono
+has no `⌘` or `◧` (they rendered as tofu boxes inside the app) and a handful of
+others — `⏮ ⚡ ✳` — carry *emoji presentation*, so macOS painted coloured emoji
+into the middle of a neutral grey interface. Everything is an inline SVG in
+`src/ui/Icon.tsx`, which also lets every stroke match the 1px hairline language.
+
 ### Design language
 
 Taken straight from Arda's portfolio so the tool and the work read as one piece
@@ -112,9 +151,12 @@ accent, Syne for headings, Satoshi for interface text, SF Mono for every number,
 a film-grain overlay, and no gradients, glow rings or neon anywhere in the
 chrome. All the colour in the window comes from the artwork.
 
-The webfonts are **bundled locally** (`public/fonts/`, ~133 KB) rather than
-pulled from a CDN, so the studio works offline and the Tauri CSP stays locked
-to `'self'`.
+### Fonts
+
+Syne (SIL Open Font License) is committed. **Satoshi is not** — Fontshare allows
+using it in a product but not redistributing the files, so a clone runs
+`npm run fonts` once to fetch them into `public/fonts/`. Everything works
+offline afterwards, and the Tauri CSP stays locked to `'self'`.
 
 ---
 
@@ -170,9 +212,6 @@ while 4:4:4 keeps it and is rejected by many players.
 | **Master** | CRF 12 · slow · 4:2:0 | Visually lossless. For archiving or re-editing later. |
 | **Lossless** | CRF 0 · medium · **4:4:4** | Pixel-for-pixel identical, very large, and social platforms reject it. |
 
-The panel shows an estimated file size per tier and explains the selected one in
-one sentence, and warns inline when you pick Lossless.
-
 **Rule of thumb: post with `High`. Archive with `Master`. Use `Lossless` only
 when handing the file to an editor.**
 
@@ -191,9 +230,7 @@ Nothing is ever overwritten — a second render becomes `name-2`.
 **PNG** instead. The studio asks for a 1×1 WebP at start-up and disables the
 option with the reason when the answer is not WebP. It is also guarded twice:
 the encoder verifies the mime it actually got, and the Rust writer sniffs the
-magic bytes and refuses a payload that contradicts the requested format. If you
-want WebP, install an ffmpeg built with `libwebp` and it can be routed through
-that instead.
+magic bytes and refuses a payload that contradicts the requested format.
 
 ---
 
@@ -208,8 +245,7 @@ Both are the studio's *own* shader: every parameter is baked in as a `const`,
 the palette is folded into a `paletteStop()` chain, the node loops are unrolled
 to constant indices with each node's behaviour resolved, and the `uNodes` /
 `uPalette` uniforms disappear entirely. The host only supplies `uResolution`
-and `uTime`. The generated GLSL compiles **and links** as GLSL ES 3.00 with no
-leftover uniforms; the p5 target compiles in a WebGL1 context.
+and `uTime`.
 
 ---
 
@@ -225,22 +261,27 @@ src/
     shaders/fullscreen.vert  gl_VertexID triangle — no vertex buffers
     engine.ts                AuraRenderer: two programs, HDR scene target,
                              cached export target, readback
-    types.ts                 AuraParams / AuraNode / patterns / scenes /
-                             ASPECTS / size table
+    types.ts                 parameters, archetypes, node kinds, ASPECTS
     runtime.ts               live renderer + clock handle
   codegen/index.ts           p5.js + GLSL generator (bakes, unrolls, rewrites)
   export/pipeline.ts         frame loop, still encoding, progress
-  state/store.ts             zustand: params, nodes, section, aspect, undo,
-                             QUALITIES / STILL_FORMATS definitions
+  state/store.ts             zustand: params, nodes, section, aspect, undo
+  update.ts                  the updater state machine
   ui/
-    shell:                   Rail, Panel, TopBar, Stage, CommandPalette, CodeDrawer
+    shell:                   Rail, Panel, TopBar, Stage, CommandPalette,
+                             CodeDrawer, UpdateBadge
     sections:                PatternPicker, groups, PaletteEditor, NodeEditor,
                              SceneGallery, ExportPanel
-    shared:                  Slider, Toggle, Segmented, ColorField, NodeControls
+    shared:                  Icon, Slider, Toggle, Segmented, ColorField,
+                             NodeControls
     params.ts                parameter registry (palette + ⌘K jump targets)
   platform.ts                Tauri bridge (no-op in a plain browser)
   selftest.ts                in-app end-to-end export test (env-gated)
   styles/                    bundled fonts + the design system
+scripts/
+  fetch-fonts.sh             one-time Satoshi download
+  install-macos.sh           copy the bundle into /Applications
+  release.sh                 version bump → build → sign → publish
 ```
 
 ### Two passes, not one
@@ -298,15 +339,13 @@ SELFTEST ok   mp4 landscape 1280x720 draft frames=30 fps=30 118282B
 SELFTEST done · all paths passed
 ```
 
-`ffprobe` confirms both clips: `h264 / High / yuv420p`, 60 fps 120 frames
-2.000000 s at 1080×1920, and 30 fps 30 frames 1.000000 s at 1280×720. The 16:9
-export was opened and compared against the 9:16 one to confirm the reframing
-rather than a stretch.
-
 ---
 
 ## Gotchas worth knowing
 
+* **The dmg bundler consumes the `.app` it packages.** Running
+  `tauri build --bundles dmg` after `--bundles app` deletes the app the previous
+  step produced. `scripts/release.sh` runs the dmg first, for that reason.
 * Driving the app's store from a browser console via a second
   `import('/src/state/store.ts')` gets you a **separate module instance** and a
   separate store — your changes appear to do nothing. Test by clicking the real
