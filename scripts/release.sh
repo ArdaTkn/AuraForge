@@ -79,16 +79,18 @@ export TAURI_SIGNING_PRIVATE_KEY
 TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_FILE")"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"
 
-echo "▶ building the signed bundle"
-npm run build
-# `app` is the target that produces the updater artifacts (.app.tar.gz + .sig).
-# The DMG goes separately: hdiutil intermittently refuses to unmount its own
-# scratch volume, and a flaky disk-image step must never sink a release.
-npm run tauri -- build --bundles app
-
 echo "▶ bundling the dmg (best effort)"
+# The dmg bundler consumes the .app it packages, so it has to run BEFORE the
+# app target. It is also the flaky one — hdiutil intermittently refuses to
+# unmount its own scratch volume — hence best-effort.
 npm run tauri -- build --bundles dmg >/dev/null 2>&1 \
   || echo "  ! dmg step failed (hdiutil was busy) — releasing without it"
+
+echo "▶ building the signed bundle"
+npm run build
+# `app` is the target that produces the updater artifacts (.app.tar.gz + .sig)
+# and it must be the last thing to run, or the dmg step deletes the app.
+npm run tauri -- build --bundles app
 
 MACOS_DIR="src-tauri/target/release/bundle/macos"
 DMG_DIR="src-tauri/target/release/bundle/dmg"
@@ -99,7 +101,9 @@ SIG="$MACOS_DIR/AuraForge.app.tar.gz.sig"
 DMG="$(ls -t "$DMG_DIR"/AuraForge_"$VERSION"_*.dmg 2>/dev/null | head -1 || true)"
 rm -f "$MACOS_DIR"/rw.*.dmg 2>/dev/null || true
 
-for f in "$APP" "$TARBALL" "$SIG"; do
+# the .app is a convenience, not a release asset — the updater ships the tarball
+[ -e "$APP" ] || echo "  (no bare .app in the bundle dir — the tarball is what ships)"
+for f in "$TARBALL" "$SIG"; do
   if [ ! -e "$f" ]; then
     echo "! expected artifact missing: $f"
     echo "  (is bundle.createUpdaterArtifacts still true in tauri.conf.json?)"
