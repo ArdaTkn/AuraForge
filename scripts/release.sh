@@ -80,9 +80,22 @@ TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_FILE")"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"
 
 echo "▶ bundling the dmg (best effort)"
-# The dmg bundler consumes the .app it packages, so it has to run BEFORE the
-# app target. It is also the flaky one — hdiutil intermittently refuses to
-# unmount its own scratch volume — hence best-effort.
+# Three things to know about this step, all discovered the hard way:
+#
+#  1. The dmg bundler CONSUMES the .app it packages, so it has to run BEFORE
+#     the app target — running it second deletes the app the previous step
+#     just built.
+#  2. It INSTALLS the app into /Applications as a side effect. Tauri's
+#     bundle_dmg.sh drops a symlink to /Applications inside the mounted volume
+#     and the copy lands in the real directory. Every build silently replaced
+#     the local install with the not-yet-published build, which is why the
+#     installed version changed before its release existed. The copy happens
+#     early, so it also happens when this step later fails.
+#  3. It is the flaky one — hdiutil intermittently refuses to unmount its own
+#     scratch volume — hence best-effort.
+#
+# The updater does not need a dmg (it ships the tarball), so if you would
+# rather not have your local install touched, delete this block.
 npm run tauri -- build --bundles dmg >/dev/null 2>&1 \
   || echo "  ! dmg step failed (hdiutil was busy) — releasing without it"
 
