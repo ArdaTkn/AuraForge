@@ -3,7 +3,6 @@ import { AuraRenderer } from '../render/engine';
 import { setClock, setRenderer } from '../render/runtime';
 import { reportStats } from '../platform';
 import { useAuraStore } from '../state/store';
-import { NodeHud } from './NodeHud';
 import { Icon, IconName } from './Icon';
 import { AuraNode, AuraParams, NODE_KINDS, aspectDef, outputSize } from '../render/types';
 
@@ -231,8 +230,6 @@ export function Stage({ onStats, onError }: StageProps) {
     [addNode, brush],
   );
 
-  const selectedNodeData = nodes.find((n) => n.id === selectedNode) ?? null;
-
   return (
     <div
       className="stage"
@@ -300,16 +297,6 @@ export function Stage({ onStats, onError }: StageProps) {
           {NODE_KINDS.find((k) => k.id === brush)?.label.toLowerCase()}
         </span>
       </div>
-
-      {selectedNodeData && size.h > 1 && (
-        <NodeHud
-          node={selectedNodeData}
-          px={uvToPx(selectedNodeData.x, selectedNodeData.y, size.w, size.h)[0]}
-          py={uvToPx(selectedNodeData.x, selectedNodeData.y, size.w, size.h)[1]}
-          width={size.w}
-          height={size.h}
-        />
-      )}
 
       {error && <div className="stage__err">RENDERER ERROR{'\n\n'}{error}</div>}
     </div>

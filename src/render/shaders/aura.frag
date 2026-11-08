@@ -238,9 +238,21 @@ vec3 paletteAt(float t) {
 
 /* ------------------------------ canvas nodes ------------------------------ */
 // Displaces the sample coordinate and accumulates a colour tint.
-vec2 applyNodes(vec2 uv, out vec3 tint, out float tintAmt) {
+//
+// The per-node displacements are blended into a WEIGHTED AVERAGE instead of
+// being summed. Summing meant two overlapping anchors displaced the coordinate
+// twice as far, three nodes three times as far, and a close cluster collapsed
+// the whole field into a single point — every ray then sampled the same bright
+// spot and the frame blew out to white. Averaging keeps a lone node
+// bit-identical to before while a cluster behaves like its strongest member
+// rather than the sum of all of them.
+vec2 applyNodes(vec2 uv, out vec3 tint, out float tintAmt, out float tintSum) {
   tint = vec3(0.0);
   tintAmt = 0.0;
+  tintSum = 0.0;
+
+  vec2 push = vec2(0.0);
+  float pushW = 0.0;
 
   for (int i = 0; i < 8; i++) {
     if (i >= uNodeCount) break;
@@ -266,30 +278,59 @@ vec2 applyNodes(vec2 uv, out vec3 tint, out float tintAmt) {
     int kind = int(B.x + 0.5);
     float k = 0.26;
 
+    vec2 delta = vec2(0.0);
     if (kind == 0) {
-      uv -= dir * s * f * k;                                  // attract
+      delta = -dir * s * f * k;                               // attract
     } else if (kind == 1) {
-      uv += dir * s * f * k;                                  // repel
+      delta = dir * s * f * k;                                // repel
     } else if (kind == 2) {
-      uv = A.xy + rot2(s * f * 2.6) * (uv - A.xy);            // vortex
+      delta = A.xy + rot2(s * f * 2.6) * (uv - A.xy) - uv;    // vortex
     } else if (kind == 3) {
-      uv -= dir * abs(s) * f * k * 1.5;                       // sink
-      uv += tang * s * f * k * 0.25;
+      delta = -dir * abs(s) * f * k * 1.5;                    // sink
+      delta += tang * s * f * k * 0.25;
     } else if (kind == 4) {
-      uv += tang * s * f * k * 1.3;                           // shear
+      delta = tang * s * f * k * 1.3;                         // shear
     } else if (kind == 5) {
-      uv += dir * s * f * k * 1.7;                            // burst
+      delta = dir * s * f * k * 1.7;                          // burst
     } else if (kind == 6) {
       float wave = sin(dist * 22.0 - uTime * 2.4 * uEvolutionSpeed);
-      uv += dir * wave * s * f * 0.12;                        // ripple
+      delta = dir * wave * s * f * 0.12;                      // ripple
     } else if (kind == 7) {
       vec2 target = normalize(tang + dir * 0.15);
-      uv += (target - dir) * s * f * k * 0.9;                 // magnet
+      delta = (target - dir) * s * f * k * 0.9;               // magnet
     }
     // kind == 8 (source) has no displacement — it only adds matter
 
-    tint += uNodeColor[i] * f * B.z;
-    tintAmt += f * B.z;
+    // the falloff is the blend weight, so a node at the rim of another's
+    // radius nudges rather than fights
+    push += delta * f;
+    pushW += f;
+
+    // Colour is accumulated two ways. `tintSum` is the plain sum of every
+    // node's colour mix, and saturating that at 1.0 is what turned a cluster
+    // into a repaint: six nodes at the default mix of 0.18 add up to 1.08, so
+    // the artwork was replaced wholesale by the *average* of their colours —
+    // and the average of several saturated hues is grey, which is exactly the
+    // washed-out white the anchors produced as they were dragged together.
+    // `tintAmt` combines them the way opacity actually behaves, so overlapping
+    // nodes converge on full strength instead of stacking past it, and the
+    // result never depends on how many nodes happen to be nearby.
+    float w = f * B.z;
+    tint += uNodeColor[i] * w;
+    tintSum += w;
+    tintAmt = 1.0 - (1.0 - tintAmt) * (1.0 - clamp(w, 0.0, 1.0));
+  }
+
+  if (pushW > 1e-4) {
+    vec2 disp = push / max(pushW, 1.0);
+
+    // Hard ceiling as a second line of defence: no composition, however many
+    // nodes it stacks, may drag the sample coordinate more than a third of the
+    // frame away from where the ray actually points.
+    float mag = length(disp);
+    if (mag > 0.30) disp *= 0.30 / mag;
+
+    uv += disp;
   }
   return uv;
 }
@@ -596,7 +637,8 @@ void main() {
 
   vec3 tint;
   float tintAmt;
-  uv = applyNodes(uv, tint, tintAmt);
+  float tintSum;
+  uv = applyNodes(uv, tint, tintAmt, tintSum);
 
   float t = uTime * uEvolutionSpeed;
   float phase = t * 0.55 + uSeed * 6.2831853;
@@ -613,7 +655,7 @@ void main() {
   float dz = 1.0 / stepsF;
   float mixAmt = clamp(uMix, 0.0, 1.0);
 
-  vec3 tintCol = tint / max(tintAmt, 1e-4);
+  vec3 tintCol = tint / max(tintSum, 1e-4);
   float tintW = clamp(tintAmt, 0.0, 1.0);
 
   vec3 accum = vec3(0.0);

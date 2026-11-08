@@ -1,25 +1,35 @@
 /* ═══════════════════════════════════════════════════════════════
    AuraForge — interface
    Design system borrowed from Arda's portfolio: dark premium
-   (#0a0a0a), Syne + Satoshi + SF Mono, 1px hairline grids, a
-   neutral accent (#d6d6d6) and a film-grain overlay.
-   No gradients on chrome, no glow rings, no neon. All colour in
-   this application comes from the artwork itself.
+   (a cool near-black), Syne + Satoshi + SF Mono, 1px hairline
+   grids and a film-grain overlay.
+
+   Two rules keep it from reading as a dead black box:
+   · the greys are cool and stepped, so surfaces separate from the
+     ground instead of merging into one mass;
+   · the accent is taken from the artwork's palette at runtime, so
+     the chrome is alive but never competes with the canvas.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg: #0a0a0a;
-  --bg2: #0d0d0d;
-  --surface: #111111;
-  --surface2: #161616;
-  --surface3: #1b1b1b;
-  --border: #1e1e1e;
-  --border-hi: #303030;
-  --text: #ededed;
-  --text-soft: #8c8c8c;
-  --text-muted: #5a5a5a;
+  --bg: #0d0d11;
+  --bg2: #111116;
+  --surface: #15151b;
+  --surface2: #1b1b22;
+  --surface3: #22222b;
+  --border: #262630;
+  --border-hi: #3b3b48;
+  --text: #f0f0f4;
+  --text-soft: #9c9caa;
+  --text-muted: #6b6b7a;
   --accent: #d6d6d6;
-  --line: rgba(237, 237, 237, 0.09);
+
+  /* Published at runtime from the artwork's own palette — see ui/liveAccent.ts.
+     Falls back to the neutral accent before React has mounted. */
+  --live: #d6d6d6;
+  --live-glow: rgba(214, 214, 214, 0.16);
+
+  --line: rgba(240, 240, 244, 0.10);
 
   --display: 'Syne', ui-sans-serif, sans-serif;
   --font: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -159,15 +169,37 @@ textarea {
 /* ══════════════════════════ TOP BAR ══════════════════════════ */
 
 .topbar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 18px;
   padding: 0 14px 0 16px;
   border-bottom: 1px solid var(--border);
-  background: rgba(10, 10, 10, 0.82);
+  background: rgba(17, 17, 22, 0.80);
   backdrop-filter: blur(22px) saturate(140%);
   -webkit-backdrop-filter: blur(22px) saturate(140%);
   z-index: 20;
+}
+
+/* a hairline of the artwork's own colour, so the top of the window breathes
+   with the palette instead of sitting there as another grey rule */
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--live) 30%,
+    var(--live) 70%,
+    transparent 100%
+  );
+  opacity: 0.42;
+  transition: background 0.5s var(--ease);
 }
 
 .brand {
@@ -274,20 +306,24 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 7px;
   font-size: 16px;
-  color: #4c4c4c;
-  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+  color: #76768a;
+  transition:
+    color 0.2s var(--ease),
+    background 0.25s var(--ease),
+    transform 0.25s var(--ease);
 }
 
 .rail__btn:hover {
-  color: var(--text-soft);
-  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(1px);
 }
 
 .rail__btn.is-active {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--live-glow);
 }
 
 .rail__btn.is-active::before {
@@ -298,7 +334,9 @@ textarea {
   width: 2px;
   height: 16px;
   margin-top: -8px;
-  background: var(--accent);
+  background: var(--live);
+  box-shadow: 0 0 10px var(--live-glow);
+  transition: background 0.5s var(--ease), box-shadow 0.5s var(--ease);
 }
 
 .rail__spacer {
@@ -428,9 +466,12 @@ textarea {
 
 .stage {
   position: relative;
-  border: 1px solid var(--border);
-  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.9);
+  border: 1px solid var(--border-hi);
+  box-shadow:
+    0 40px 90px -40px rgba(0, 0, 0, 0.9),
+    0 0 70px -34px var(--live-glow);
   animation: fade-in 0.4s var(--ease);
+  transition: box-shadow 0.5s var(--ease), border-color 0.5s var(--ease);
 }
 
 .stage__canvas {
@@ -522,6 +563,10 @@ textarea {
   background: var(--accent);
   border-color: var(--accent);
   font-weight: 500;
+  transition:
+    background 0.4s var(--ease),
+    border-color 0.4s var(--ease),
+    filter 0.18s var(--ease);
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -760,7 +805,7 @@ textarea {
 
 .toggle.is-on .toggle__knob {
   transform: translateX(13px);
-  background: var(--accent);
+  background: var(--live);
 }
 
 .toggle__label {
@@ -1261,54 +1306,6 @@ textarea {
   border: 1px dashed currentColor;
 }
 
-/* ------------------- floating node card over the canvas ------------------ */
-
-.node-hud {
-  position: absolute;
-  width: 250px;
-  border: 1px solid #3a3a3a;
-  border-radius: 9px;
-  background: rgba(11, 11, 11, 0.94);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  box-shadow: 0 26px 60px -26px rgba(0, 0, 0, 0.95);
-  z-index: 30;
-  animation: rise-in 0.2s var(--ease);
-  overflow: hidden;
-}
-
-.node-hud__head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 10px;
-  border-bottom: 1px solid var(--line);
-}
-
-.node-hud__glyph {
-  font-size: 13px;
-  line-height: 1;
-}
-
-.node-hud__name {
-  flex: 1;
-  min-width: 0;
-  font-size: 11.5px;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.node-hud__body {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-  padding: 12px 12px 14px;
-  max-height: 350px;
-  overflow-y: auto;
-}
-
 /* ══════════════════════════ SCENES ══════════════════════════ */
 
 .scenes {
@@ -1734,8 +1731,8 @@ textarea {
 }
 
 .qrow.is-active .qrow__dot {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--live);
+  border-color: var(--live);
 }
 
 .qrow__name {
@@ -1774,7 +1771,6 @@ textarea {
 .ncard__glyph,
 .kind__glyph,
 .node__glyph,
-.node-hud__glyph,
 .cmdk__glyph,
 .aspect__chip,
 .rail__btn,
@@ -1788,8 +1784,7 @@ textarea {
 
 .node__glyph svg,
 .ncard__glyph svg,
-.kind__glyph svg,
-.node-hud__glyph svg {
+.kind__glyph svg {
   display: block;
 }
 
@@ -1878,7 +1873,7 @@ textarea {
   position: absolute;
   inset: 0 auto 0 0;
   width: 40%;
-  background: var(--accent);
+  background: var(--live);
   animation: boot-slide 1.2s var(--ease) infinite;
 }
 
@@ -1958,7 +1953,7 @@ textarea {
 .progress__bar span {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: var(--live);
   transition: width 0.12s linear;
 }
 

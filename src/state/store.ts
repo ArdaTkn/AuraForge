@@ -506,7 +506,11 @@ export const useAuraStore = create<AuraState>((set, get) => {
       }));
     },
 
-    selectNode: (id) => set({ selectedNode: id }),
+    // Clicking an anchor on the canvas opens its editor in the panel. The
+    // canvas is for placing anchors; the panel is for editing them, so there
+    // is exactly one place any property can be changed.
+    selectNode: (id) =>
+      set((s) => ({ selectedNode: id, section: id ? 'nodes' : s.section })),
 
     clearNodes: () => {
       push();

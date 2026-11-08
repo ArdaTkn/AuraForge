@@ -131,28 +131,29 @@ function paletteFunction(params: AuraParams): string {
 
 function nodeDisplacement(n: AuraNode, x: string, y: string, s: string): string {
   const kind = NODE_KIND_INDEX[n.kind] ?? 0;
+  const P = `vec2(${x}, ${y})`;
   switch (kind) {
     case 0:
-      return `      uv -= dir * ${s} * f * k;`;
+      return `      delta = -dir * ${s} * f * k;`;
     case 1:
-      return `      uv += dir * ${s} * f * k;`;
+      return `      delta = dir * ${s} * f * k;`;
     case 2:
-      return `      uv = vec2(${x}, ${y}) + rot2(${s} * f * 2.6) * (uv - vec2(${x}, ${y}));`;
+      return `      delta = ${P} + rot2(${s} * f * 2.6) * (uv - ${P}) - uv;`;
     case 3:
       return [
-        `      uv -= dir * abs(${s}) * f * k * 1.5;`,
-        `      uv += tang * ${s} * f * k * 0.25;`,
+        `      delta = -dir * abs(${s}) * f * k * 1.5;`,
+        `      delta += tang * ${s} * f * k * 0.25;`,
       ].join('\n');
     case 4:
-      return `      uv += tang * ${s} * f * k * 1.3;`;
+      return `      delta = tang * ${s} * f * k * 1.3;`;
     case 5:
-      return `      uv += dir * ${s} * f * k * 1.7;`;
+      return `      delta = dir * ${s} * f * k * 1.7;`;
     case 6:
-      return `      uv += dir * sin(dist * 22.0 - uTime * 2.4 * uEvolutionSpeed) * ${s} * f * 0.12;`;
+      return `      delta = dir * sin(dist * 22.0 - uTime * 2.4 * uEvolutionSpeed) * ${s} * f * 0.12;`;
     case 7:
       return [
         `      vec2 target = normalize(tang + dir * 0.15);`,
-        `      uv += (target - dir) * ${s} * f * k * 0.9;`,
+        `      delta = (target - dir) * ${s} * f * k * 0.9;`,
       ].join('\n');
     default:
       return `      // source: no displacement`;
@@ -192,15 +193,40 @@ function unrollNodes(src: string, params: AuraParams, nodes: AuraNode[]): string
             `    float xr = dist / ${r};`,
             '    if (xr < 1.0) {',
             `      float f = pow(1.0 - xr, ${fall});`,
+            '      vec2 delta = vec2(0.0);',
             nodeDisplacement(n, x, y, s),
-            `      tint += vec3(${f(cr)}, ${f(cg)}, ${f(cb)}) * f * ${cm};`,
-            `      tintAmt += f * ${cm};`,
+            '      push += delta * f;',
+            '      pushW += f;',
+            `      float w = f * ${cm};`,
+            `      tint += vec3(${f(cr)}, ${f(cg)}, ${f(cb)}) * w;`,
+            '      tintSum += w;',
+            '      tintAmt = 1.0 - (1.0 - tintAmt) * (1.0 - clamp(w, 0.0, 1.0));',
             '    }',
             '  }',
           ].join('\n');
         })
         .join('\n');
-      const replacement = `${markers[0]}\n${body || '  // no active nodes'}\n  return uv;\n}`;
+      // Displacements are averaged and colours combine like opacity, not like a
+      // sum — two anchors on top of each other used to displace twice as far
+      // and repaint the artwork with the average of their hues, which is grey.
+      // Mirrors aura.frag exactly.
+      const replacement = [
+        markers[0],
+        '  tint = vec3(0.0);',
+        '  tintAmt = 0.0;',
+        '  tintSum = 0.0;',
+        '  vec2 push = vec2(0.0);',
+        '  float pushW = 0.0;',
+        body || '  // no active nodes',
+        '  if (pushW > 1e-4) {',
+        '    vec2 disp = push / max(pushW, 1.0);',
+        '    float mag = length(disp);',
+        '    if (mag > 0.30) disp *= 0.30 / mag;',
+        '    uv += disp;',
+        '  }',
+        '  return uv;',
+        '}',
+      ].join('\n');
       src = src.slice(0, start) + replacement + src.slice(end + 2);
     }
   }

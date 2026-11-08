@@ -7,6 +7,7 @@ import { CodeDrawer } from './ui/CodeDrawer';
 import { CommandPalette } from './ui/CommandPalette';
 import { SECTIONS, useAuraStore } from './state/store';
 import { useUpdater } from './update';
+import { applyLiveAccent } from './ui/liveAccent';
 
 export default function App() {
   const [fps, setFps] = useState(0);
@@ -30,6 +31,14 @@ export default function App() {
   useEffect(() => {
     void useUpdater.getState().boot();
   }, []);
+
+  /* The accent follows the artwork. Subscribing to the joined string rather
+     than the array keeps this from re-running on every unrelated parameter
+     change. */
+  const paletteKey = useAuraStore((s) => s.params.palette.join(','));
+  useEffect(() => {
+    applyLiveAccent(paletteKey.split(','));
+  }, [paletteKey]);
 
   /* ------------------------------- shortcuts ------------------------------- */
   useEffect(() => {
