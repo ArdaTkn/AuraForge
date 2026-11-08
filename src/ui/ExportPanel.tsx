@@ -340,9 +340,17 @@ export function ExportPanel() {
         )}
       </div>
 
-      <button className="btn btn--primary btn--wide" disabled={busy} onClick={() => void doVideo()}>
-        <Icon name="play" size={12} /> Render MP4 · {frames} frames · {width}×{height} · ~
-        {formatBytes(estimateBytes(width, height, seconds, q.weight))}
+      <button className="btn btn--render" disabled={busy} onClick={() => void doVideo()}>
+        <span className="btn__mark">
+          <Icon name="export" size={16} />
+        </span>
+        <span className="btn__stack">
+          <span className="btn__label">Render MP4</span>
+          <span className="btn__meta">
+            {width}×{height} · {frames} frames · {fps} fps · ~
+            {formatBytes(estimateBytes(width, height, seconds, q.weight))}
+          </span>
+        </span>
       </button>
 
       {(rendering || progress.phase === 'done') && (

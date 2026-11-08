@@ -247,17 +247,90 @@ pub fn export_root() -> Result<ExportRoots, String> {
     })
 }
 
+/// Where ffmpeg actually is.
+///
+/// A GUI app launched from Finder or the Dock does not inherit the shell's
+/// PATH — macOS hands it `/usr/gnu/bin:/usr/local/bin:/bin:/usr/bin:.` — so
+/// `Command::new("ffmpeg")` works when the app is started from a terminal and
+/// fails with ENOENT (os error 2) when it is launched from /Applications.
+/// Check the places Homebrew and MacPorts really install, then fall back to
+/// PATH, and let `AURAFORGE_FFMPEG` override everything.
+fn ffmpeg_bin() -> std::ffi::OsString {
+    if let Some(explicit) = std::env::var_os("AURAFORGE_FFMPEG") {
+        return explicit;
+    }
+
+    const CANDIDATES: [&str; 5] = [
+        "/opt/homebrew/bin/ffmpeg", // Homebrew on Apple silicon
+        "/usr/local/bin/ffmpeg",    // Homebrew on Intel
+        "/opt/local/bin/ffmpeg",    // MacPorts
+        "/usr/bin/ffmpeg",
+        "/snap/bin/ffmpeg",
+    ];
+
+    for candidate in CANDIDATES {
+        if std::path::Path::new(candidate).is_file() {
+            return candidate.into();
+        }
+    }
+
+    "ffmpeg".into()
+}
+
+/// Shown when ffmpeg cannot be started at all. The raw os error is an ENOENT
+/// that tells the artist nothing, so it says what was searched and what to do.
+fn ffmpeg_missing(e: &std::io::Error) -> String {
+    format!(
+        "ffmpeg could not be started ({e}).\n\n\
+         AuraForge looked in /opt/homebrew/bin, /usr/local/bin, /opt/local/bin, \
+         /usr/bin and /snap/bin, then on PATH. Install it with \
+         `brew install ffmpeg`, or set AURAFORGE_FFMPEG to the full path of the \
+         binary and relaunch."
+    )
+}
+
 #[tauri::command]
 pub async fn ffmpeg_version() -> Result<String, String> {
-    let out = Command::new("ffmpeg")
+    let out = Command::new(ffmpeg_bin())
         .arg("-version")
         .output()
-        .map_err(|e| format!("ffmpeg could not be started: {e}"))?;
+        .map_err(|e| ffmpeg_missing(&e))?;
     if !out.status.success() {
         return Err("ffmpeg -version reported a failure".into());
     }
     let text = String::from_utf8_lossy(&out.stdout);
     Ok(text.lines().next().unwrap_or("ffmpeg (unknown version)").to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The whole reason `ffmpeg_bin` exists: a GUI app's PATH does not contain
+    /// Homebrew, so resolution must not depend on PATH. If ffmpeg is installed
+    /// where this machine puts it, the returned path must be that absolute file
+    /// rather than a bare name that only a shell could resolve.
+    #[test]
+    fn ffmpeg_resolves_without_a_shell_path() {
+        let installed = ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg"]
+            .iter()
+            .any(|p| std::path::Path::new(p).is_file());
+
+        if !installed {
+            eprintln!("skipped: no ffmpeg in the usual Homebrew locations");
+            return;
+        }
+
+        let resolved = ffmpeg_bin();
+        let path = std::path::Path::new(&resolved);
+
+        assert!(
+            path.is_absolute(),
+            "expected an absolute path, got {resolved:?} — a bare name would \
+             fail again from /Applications"
+        );
+        assert!(path.is_file(), "resolved {resolved:?} is not a file");
+    }
 }
 
 #[tauri::command]
@@ -333,7 +406,7 @@ pub async fn begin_render(
 
     let log = File::create(&log_path).map_err(|e| format!("could not create log: {e}"))?;
 
-    let child = Command::new("ffmpeg")
+    let child = Command::new(ffmpeg_bin())
         .args([
             "-hide_banner",
             "-loglevel",
@@ -366,7 +439,7 @@ pub async fn begin_render(
         .stdout(Stdio::null())
         .stderr(Stdio::from(log))
         .spawn()
-        .map_err(|e| format!("ffmpeg could not be started (is it on PATH?): {e}"))?;
+        .map_err(|e| ffmpeg_missing(&e))?;
 
     let mut child = child;
     let stdin = child.stdin.take().ok_or("could not open ffmpeg stdin")?;
