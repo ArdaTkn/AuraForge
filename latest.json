@@ -1,0 +1,11 @@
+{
+  "version": "0.3.1",
+  "notes": "Rendering works when the app is launched from the Dock or Spotlight, not only from a terminal. ffmpeg was looked up on PATH, which a GUI app does not inherit — the app now finds it in the Homebrew and MacPorts locations directly, with an AURAFORGE_FFMPEG override. The Render MP4 button was being crushed to two pixels by the panel's flex layout because its content is taller than the window; it no longer shrinks, and the action is rebuilt as a proper primary button with its resolution, length, frame rate and estimated size on a second line.",
+  "pub_date": "2026-11-08T23:05:28.721Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSVjRHVGtPaHBJcUtWdVQ3ZlNsSlArMGQrdjVDUWVQTm01dy9xRFEwUE9TYU5Pc0JYVmxxbmFPYU56YkxjSnl4NERwUkttcEthQ0FLVVp6NDdJRkMwTkkrRDBOUHRWU1FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MTc5MTI4CWZpbGU6QXVyYUZvcmdlLmFwcC50YXIuZ3oJdmVyc2lvbjowLjMuMQpBMmlUT0JmYTZPSjlFb2dIN0FDVy9CZ1gxT0haR3FaeWwzNk1EWmtHelRBZVV2K1I0RVl5K3N4M0lOU2UxcWh5ajhCdmlpbEpTaGpzUTRVOER0YTRBQT09Cg==",
+      "url": "https://github.com/ArdaTkn/AuraForge/releases/download/v0.3.1/AuraForge.app.tar.gz"
+    }
+  }
+}

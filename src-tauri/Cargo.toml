@@ -1,6 +1,6 @@
 [package]
 name = "auraforge"
-version = "0.3.0"
+version = "0.3.1"
 description = "AuraForge — real-time parametric generative art studio"
 authors = ["Arda Tekin"]
 edition = "2021"
